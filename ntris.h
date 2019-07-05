@@ -14,6 +14,7 @@ typedef struct _block block;
 
 struct _nomino {
     INT8 size;
+    INT8 rot;
     block ** blocks;    // 2d array, length <size>, each sub array length 2 as coords
     struct _nomino * next;
 };

@@ -85,6 +85,7 @@ nomino * duplicateGrow (nomino * parentNomino) {
     childNomino = malloc (sizeof (nomino));
     childNomino->size = parentNomino->size + 1;
     childNomino->blocks = malloc (sizeof (block *) * childNomino->size);
+    childNomino->rot = parentNomino->rot;
     childNomino->next = NULL;
 
     // copy the parents blocks in
@@ -112,6 +113,7 @@ nomino * duplicate (nomino * parentNomino) {
     childNomino = malloc (sizeof (nomino));
     childNomino->size = parentNomino->size;
     childNomino->blocks = malloc (sizeof (block *) * childNomino->size);
+    childNomino->rot = parentNomino->rot;
     childNomino->next = NULL;
 
     // copy the parents blocks in
@@ -181,12 +183,8 @@ void rotate (nomino * nomspino) {
         buffer = nomspino->blocks[ii]->x;
         nomspino->blocks[ii]->x = nomspino->blocks[ii]->y * -1;
         nomspino->blocks[ii]->y = buffer;
-        nomspino->blocks[ii]->bmap <<= 1;
-        if ((nomspino->blocks[ii]->bmap & 0x10) != 0) {
-            nomspino->blocks[ii]->bmap |= 0x01;
-            nomspino->blocks[ii]->bmap &= 0x0f;
-        }
     }
+    nomspino->rot++;
 }
 
 // compare 2 nominos, returns ERROR if not matching, OK if matching
@@ -228,7 +226,6 @@ nomino * genNominos (nomino * headParent) {
     nomino * currChild = NULL; // position in list
     nomino * compChild = NULL; // pointer to compare for duplicates
     nomino * buffChild = NULL; // nomino being worked on / checked
-    nomino * dupChild = NULL;  // duplicated child that gets rotated and checked
     nomino * lastParent = NULL;// pointer to parent nomino to free
 
     if (headParent == NULL)
@@ -318,6 +315,9 @@ nomino * genNominos (nomino * headParent) {
                         break;
                 }
 
+                while (buffChild->rot !=0)
+                    rotate (buffChild);
+
                 normalize(buffChild);
 
                 // Add if not a duplicate 
@@ -363,6 +363,7 @@ int main (int argc, char * argv[]) {
     // set up root nomino
     noms = malloc (sizeof (nomino));
     noms->size = 1;
+    noms->rot = 0;
     noms->blocks = malloc (sizeof (block *));
     noms->blocks[0] = malloc (sizeof (block));
     noms->blocks[0]->x = 0;
