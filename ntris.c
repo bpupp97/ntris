@@ -7,7 +7,7 @@
 
 #include "ntris.h"
 
-long int shapes = 0;
+int shapes = 0;
 
 /*
 // connected thin lines
@@ -25,41 +25,57 @@ wint_t nomChars[] = {0x2588,        // 0, no flags
     0x2588, 0x2588, 0x2588, 0x2588, // NW, EW, NEW, SW
     0x2588, 0x2588, 0x2588};        // NSW, SEW, NSEW
 
-void printNomino (nomino * nominout, FILE * fd) {
+// print all nominos starting with the input shape, to file descriptor fd
+void printNominos (nomino * nominout, FILE * fd) {
     wint_t ** screen;
+    int size;
+    int numcols;
     int ii;
     int jj;
+
+    size = nominout->size;
+    numcols = MAXPRINTWIDTH / (size+2);
+
+    // set up screen
+    screen = malloc (sizeof (wint_t*) * size);
+    for (ii = 0; ii < size; ii++) {
+        screen[ii] = malloc (sizeof(wint_t) * (size+2) * numcols);
+    }
+
+    // loop through list
+    while (nominout != NULL) {
+        // clear screen
+        for (ii = 0; ii < size; ii++) {
+            for (jj = 0; jj < (size+2) * numcols; jj++) {
+                screen[ii][jj] = ' ';
+            }
+        }
+
+        // insert row of shapes
+        for (ii = 0; ii < numcols; ii++) {
+            for (jj = 0; jj < size; jj++) {
+                screen  [nominout->blocks[jj]->y]
+                        [nominout->blocks[jj]->x + (ii * (size+2))] = 
+                        nomChars[nominout->blocks[jj]->bmap];
+            }
+            shapes++;
+
+            nominout = nominout->next;
+            if (nominout == NULL)
+                break;
+        }
     
-
-    // set up the screen to insert into
-    screen = malloc (sizeof (wint_t *) * (nominout->size + 1));
-    for (ii = 0; ii < nominout->size + 1; ii++) {
-        screen[ii] = malloc (1 + sizeof (wint_t) * nominout->size);
-        for (jj = 0; jj < nominout->size; jj++) {
-            screen[ii][jj] = ' ';
+        // print
+        for (ii = 0; ii < size; ii++) {
+            for (jj = 0; jj < (size+2) * numcols; jj++) {
+                fprintf (fd, "%lc", screen[ii][jj]);
+            }
+            fprintf (fd, "\n");
         }
-        screen[ii][nominout->size] = '\0';
-    }
-
-    // insert the blocks
-    for (ii = 0; ii < nominout->size; ii++) {
-        screen[nominout->blocks[ii]->y][nominout->blocks[ii]->x] = 
-                nomChars[nominout->blocks[ii]->bmap & 0x0f];
-    }
-
-    // print the lines
-    for (ii = 0; ii < nominout->size; ii++) {
-        // if (strcmp (screen[ii], screen[nominout->size]) == 0)
-        //    continue;
-        for (jj = 0; jj < nominout->size; jj++) {
-            fprintf (fd, "%lc", screen[ii][jj]);
-        }
-        fprintf (fd, "\n");
-    }
-    fprintf (fd, "\n");
+    } 
 
     // free mem
-    for (ii = 0; ii < nominout->size + 1; ii++) {
+    for (ii = 0; ii < size; ii++) {
         free (screen[ii]);
     }
     free (screen);
@@ -278,8 +294,6 @@ nomino * genNominos (nomino * headParent) {
                 if (status == ERROR)
                     continue;
 
-                shapes++;
-
                 // if head is NULL, list is empty, so obviously not a duplicate, add now
                 if (headChild == NULL) {
                     normalize (buffChild);
@@ -345,7 +359,6 @@ int main (int argc, char * argv[]) {
     int ii = 0;
     nomino * noms = NULL;
     nomino * newNoms = NULL;
-    int count = 0;
     clock_t clkStart;
     clock_t clkEnd;
     float diffTime;
@@ -377,10 +390,9 @@ int main (int argc, char * argv[]) {
         noms = newNoms;
     }
 
-
     clkEnd = clock();
     diffTime = (float) (clkEnd - clkStart) / CLOCKS_PER_SEC;
-
+    
     // open file
     fd = fopen (OUTFILE, "w+");
     if (fd == NULL)
@@ -388,43 +400,14 @@ int main (int argc, char * argv[]) {
 
     // do printing
     setlocale (LC_ALL, "");
-    while (noms != NULL) {
-        if (fd != NULL)
-            printNomino (noms, fd);
-        count++;
-        noms = noms->next;
-    }
+    printNominos (noms, fd);
 
     if (fd != NULL)
         fclose (fd);
 
-    /*printf ("Generated %d unique %sominos in:\n"
-            "    %ld shapes (%.2f%% unqiue)\n"
-            "    %d recursions (%.2f%% hit rate)\n"
-            "    %.2f seconds (%.0f [%.0f] / sec)\n", count,
-                size == 1 ? "mon" :
-                size == 2 ? "d" :
-                size == 3 ? "tr" :
-                size == 4 ? "tetr" :
-                size == 5 ? "pent" :
-                size == 6 ? "hex" :
-                size == 7 ? "hept" :
-                size == 8 ? "oct" :
-                size == 9 ? "non" :
-                size == 10 ? "dec" :
-                "poly",
-                shapes,
-                (float) numnoms / (float) shapes * 100.0,
-                entries,
-                (float) count * 100 / entries,
-                diffTime,
-               (float)count / diffTime,
-               (float)numnoms / diffTime);
-    */
-
     printf ("Generated %d unique %sominos in:\n"
             "    %.2f seconds (%.0f / sec)\n",
-                count,
+                shapes,
                 size == 1 ? "mon" :
                 size == 2 ? "d" :
                 size == 3 ? "tr" :
@@ -437,7 +420,7 @@ int main (int argc, char * argv[]) {
                 size == 10 ? "dec" :
                 "poly",
                 diffTime,
-               (float)count / diffTime);
+               (float)shapes / diffTime);
 
     return OK;
 }
