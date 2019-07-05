@@ -21,9 +21,9 @@ struct _nomino {
 
 typedef struct _nomino nomino;
 
-#define OK 0
-#define ERROR -1
+#define OK          0
+#define ERROR       -1
 
-#define OUTFILE "ntris.out"
+#define OUTFILE     "ntris.out"
 
 #endif // INC_NTRIS_H

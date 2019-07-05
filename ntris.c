@@ -9,21 +9,21 @@
 
 long int shapes = 0;
 
+/*
 // connected thin lines
 wint_t nomChars[] = {0x2588,        // 0, no flags
     0x2579, 0x257A, 0x2514, 0x257B, // N, E, NE, S
     0x2502, 0x250C, 0x251C, 0x2578, // NS, SE, NSE, W
     0x2518, 0x2500, 0x2534, 0x2510, // NW, EW, NEW, SW
     0x2524, 0x252C, 0x253C};        // NSW, SEW, NSEW
+*/
 
-/*
 // all blocks
 wint_t nomChars[] = {0x2588,        // 0, no flags
     0x2588, 0x2588, 0x2588, 0x2588, // N, E, NE, S
     0x2588, 0x2588, 0x2588, 0x2588, // NS, SE, NSE, W
     0x2588, 0x2588, 0x2588, 0x2588, // NW, EW, NEW, SW
     0x2588, 0x2588, 0x2588};        // NSW, SEW, NSEW
-*/
 
 void printNomino (nomino * nominout, FILE * fd) {
     wint_t ** screen;
