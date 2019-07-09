@@ -26,5 +26,6 @@ typedef struct _nomino nomino;
 
 #define OUTFILE         "ntris.out"
 #define MAXPRINTWIDTH   80
+#define PRINTSPACING    4
 
 #endif // INC_NTRIS_H

@@ -9,21 +9,41 @@
 
 int shapes = 0;
 
-/*
 // connected thin lines
 wint_t nomChars[] = {0x2588,        // 0, no flags
     0x2579, 0x257A, 0x2514, 0x257B, // N, E, NE, S
     0x2502, 0x250C, 0x251C, 0x2578, // NS, SE, NSE, W
     0x2518, 0x2500, 0x2534, 0x2510, // NW, EW, NEW, SW
     0x2524, 0x252C, 0x253C};        // NSW, SEW, NSEW
-*/
 
+/*
 // all blocks
 wint_t nomChars[] = {0x2588,        // 0, no flags
     0x2588, 0x2588, 0x2588, 0x2588, // N, E, NE, S
     0x2588, 0x2588, 0x2588, 0x2588, // NS, SE, NSE, W
     0x2588, 0x2588, 0x2588, 0x2588, // NW, EW, NEW, SW
     0x2588, 0x2588, 0x2588};        // NSW, SEW, NSEW
+*/
+
+void saveNominos (nomino * nominout, FILE * fd) {
+// save in form <size>/<rotation>/[<x>,<y>,<bmap>],[],[]\n
+    int ii;
+    shapes = 0;
+
+    while (nominout != NULL) {
+        for (ii = 0; ii < nominout->size; ii++) {
+            if (ii != 0)
+                fprintf (fd, ",[%d,%d,%d]", nominout->blocks[ii]->x,
+                        nominout->blocks[ii]->y, nominout->blocks[ii]->bmap);
+            else
+                fprintf (fd, "{[%d,%d,%d]", nominout->blocks[ii]->x,
+                        nominout->blocks[ii]->y, nominout->blocks[ii]->bmap);
+        }
+        fprintf (fd, "}\n");
+        nominout = nominout->next;
+        shapes++;
+    }
+}
 
 // print all nominos starting with the input shape, to file descriptor fd
 void printNominos (nomino * nominout, FILE * fd) {
@@ -34,19 +54,20 @@ void printNominos (nomino * nominout, FILE * fd) {
     int jj;
 
     size = nominout->size;
-    numcols = MAXPRINTWIDTH / (size+2);
+    numcols = MAXPRINTWIDTH / (size + PRINTSPACING);
+    shapes = 0;
 
     // set up screen
     screen = malloc (sizeof (wint_t*) * size);
     for (ii = 0; ii < size; ii++) {
-        screen[ii] = malloc (sizeof(wint_t) * (size+2) * numcols);
+        screen[ii] = malloc (sizeof(wint_t) * (size + PRINTSPACING) * numcols);
     }
 
     // loop through list
     while (nominout != NULL) {
         // clear screen
         for (ii = 0; ii < size; ii++) {
-            for (jj = 0; jj < (size+2) * numcols; jj++) {
+            for (jj = 0; jj < (size + PRINTSPACING) * numcols; jj++) {
                 screen[ii][jj] = ' ';
             }
         }
@@ -55,7 +76,7 @@ void printNominos (nomino * nominout, FILE * fd) {
         for (ii = 0; ii < numcols; ii++) {
             for (jj = 0; jj < size; jj++) {
                 screen  [nominout->blocks[jj]->y]
-                        [nominout->blocks[jj]->x + (ii * (size+2))] = 
+                        [nominout->blocks[jj]->x + (ii * (size + PRINTSPACING))] = 
                         nomChars[nominout->blocks[jj]->bmap];
             }
             shapes++;
@@ -67,11 +88,12 @@ void printNominos (nomino * nominout, FILE * fd) {
     
         // print
         for (ii = 0; ii < size; ii++) {
-            for (jj = 0; jj < (size+2) * numcols; jj++) {
+            for (jj = 0; jj < (size + PRINTSPACING) * numcols; jj++) {
                 fprintf (fd, "%lc", screen[ii][jj]);
             }
             fprintf (fd, "\n");
         }
+        fprintf (fd, "\n");
     } 
 
     // free mem
@@ -400,7 +422,8 @@ int main (int argc, char * argv[]) {
 
     // do printing
     setlocale (LC_ALL, "");
-    printNominos (noms, fd);
+    // printNominos (noms, fd);
+    saveNominos (noms, fd);
 
     if (fd != NULL)
         fclose (fd);
