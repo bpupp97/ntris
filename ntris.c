@@ -4,13 +4,95 @@
 #include <time.h>
 #include <wchar.h>
 #include <locale.h>
-
+#include <unistd.h>
 #include "ntris.h"
 
-int shapes = 0;
-extern wint_t nomchars[];
+int numShapes;
 
-// generate a list of all unique nominos for a size, given a list 1 size smaller of nominos
+int main (int argc, char * argv[]) {
+    int size = 0;
+    int ii = 0;
+    nomino * noms = NULL;
+    nomino * newNoms = NULL;
+    clock_t clkStart;
+    clock_t clkEnd;
+    float diffTime;
+    FILE * fd;
+
+    // Check arguments were entered properly
+    if (argc < 2 || argc > 3 || (size = atoi (argv[1])) <= 0) {
+        printf ("USAGE: ntris <size> [file]\n");
+        return ERROR;
+    }
+
+    if (argc != 3)
+        fd = stdout;
+
+    // start timer
+    clkStart = clock();
+
+    // set up root nomino
+    noms = malloc (sizeof (nomino));
+    noms->size = 1;
+    noms->rot = 0;
+    noms->blocks = malloc (sizeof (block *));
+    noms->blocks[0] = malloc (sizeof (block));
+    noms->blocks[0]->x = 0;
+    noms->blocks[0]->y = 0;
+    noms->blocks[0]->bmap = 0x00;
+    noms->next = NULL;
+
+    // begin
+    for (ii = 1; ii < size; ii++) {
+        newNoms = genNominos (noms);
+        noms = newNoms;
+    }
+
+    clkEnd = clock();
+    diffTime = (float) (clkEnd - clkStart) / CLOCKS_PER_SEC;
+    
+    // open file
+    if (fd != stdout) {
+        fd = fopen (argv[2], "w+");
+        if (fd == NULL)
+            printf ("Failed to open file for writing!\n");
+    }
+    // do printing
+    printNominos (noms, fd);
+
+    if (fd != NULL && fd != stdout)
+        fclose (fd);
+
+    printf ("Generated %d unique %sominos in:\n"
+            "    %.2f seconds (%.0f / sec)\n",
+                numShapes,
+                size == 1 ? "mon" :
+                size == 2 ? "d" :
+                size == 3 ? "tr" :
+                size == 4 ? "tetr" :
+                size == 5 ? "pent" :
+                size == 6 ? "hex" :
+                size == 7 ? "hept" :
+                size == 8 ? "oct" :
+                size == 9 ? "non" :
+                size == 10 ? "dec" :
+                "poly",
+                diffTime,
+               (float)numShapes / diffTime);
+
+    return OK;
+}
+
+/*
+ * nomino * genNominos (nomino *)
+ *
+ * Generates a linked list of nominos one size larger than the one passed in
+ * as parameter. Uses this parameter list as the root shapes, and frees all
+ * memory from the input list as it traverses
+ *
+ * Returns: head of linked list of larger set of unique shapes
+ *
+ */
 nomino * genNominos (nomino * headParent) {
     int size = -1;
     int ii = 0;
@@ -28,7 +110,8 @@ nomino * genNominos (nomino * headParent) {
         return NULL;
 
     size = headParent->size;
-    
+    numShapes = 0;
+
     // for each nomino
     while (headParent != NULL) {
         buffChild = duplicateGrow (headParent);
@@ -84,6 +167,7 @@ nomino * genNominos (nomino * headParent) {
                     headChild->blocks[size]->bmap = 0x01 << ((jj + 2) % 4);
 
                     currChild = headChild;
+                    numShapes++;
                     continue;
                 }
 
@@ -123,6 +207,7 @@ nomino * genNominos (nomino * headParent) {
                     currChild->next->blocks[size]->bmap = 0x01 << ((jj + 2) % 4);
 
                     currChild = currChild->next;
+                    numShapes++;
                 }
             }
         }
@@ -134,74 +219,4 @@ nomino * genNominos (nomino * headParent) {
     return headChild;
 }
 
-int main (int argc, char * argv[]) {
-    int size = 0;
-    int ii = 0;
-    nomino * noms = NULL;
-    nomino * newNoms = NULL;
-    clock_t clkStart;
-    clock_t clkEnd;
-    float diffTime;
-    FILE * fd;
 
-    // Check arguments were entered properly
-    if (argc != 2 || (size = atoi (argv[1])) <= 0) {
-        printf ("USAGE: ntris <size>\n");
-        return ERROR;
-    }
-    
-    // start timer
-    clkStart = clock();
-
-    // set up root nomino
-    noms = malloc (sizeof (nomino));
-    noms->size = 1;
-    noms->rot = 0;
-    noms->blocks = malloc (sizeof (block *));
-    noms->blocks[0] = malloc (sizeof (block));
-    noms->blocks[0]->x = 0;
-    noms->blocks[0]->y = 0;
-    noms->blocks[0]->bmap = 0x00;
-    noms->next = NULL;
-
-    // begin
-    for (ii = 1; ii < size; ii++) {
-        newNoms = genNominos (noms);
-        noms = newNoms;
-    }
-
-    clkEnd = clock();
-    diffTime = (float) (clkEnd - clkStart) / CLOCKS_PER_SEC;
-    
-    // open file
-    fd = fopen (OUTFILE, "w+");
-    if (fd == NULL)
-        printf ("Failed to open file for writing!\n");
-
-    // do printing
-    setlocale (LC_ALL, "");
-    // printNominos (noms, fd);
-    saveNominos (noms, fd);
-
-    if (fd != NULL)
-        fclose (fd);
-
-    printf ("Generated %d unique %sominos in:\n"
-            "    %.2f seconds (%.0f / sec)\n",
-                shapes,
-                size == 1 ? "mon" :
-                size == 2 ? "d" :
-                size == 3 ? "tr" :
-                size == 4 ? "tetr" :
-                size == 5 ? "pent" :
-                size == 6 ? "hex" :
-                size == 7 ? "hept" :
-                size == 8 ? "oct" :
-                size == 9 ? "non" :
-                size == 10 ? "dec" :
-                "poly",
-                diffTime,
-               (float)shapes / diffTime);
-
-    return OK;
-}
