@@ -24,11 +24,21 @@ struct _nomino {
 
 typedef struct _nomino nomino;
 
-#define OK      0
-#define ERROR   -1
-
+#define OK              0
+#define ERROR           -1
+#define MAXFNAME        50
 #define MAXPRINTWIDTH   80
 #define PRINTSPACING    4
+
+#define USAGE           "USAGE: ntris (-options) <size>\n" \
+                        "\n" \
+                        "    OPTIONS: -o <file>     output shapes to file <file>\n" \
+                        "             -l <file>     load shapes from file <file>\n" \
+                        "             -s <file>     save shapes to file <file>\n" \
+                        "             -q            quiet mode, no output\n" \
+                        "\n"
+#define FAILOPEN        "Failed to open file: %s\n"
+#define FAILLOAD        "Failed to load nominos: Invalid Data\n"
 
 extern wint_t nomchars[];
 
