@@ -25,24 +25,91 @@ wint_t nomChars[] = {0x2588,        // 0, no flags
     0x2588, 0x2588, 0x2588};        // NSW, SEW, NSEW
 */
 
+// save to file in the form x,y,bmap;x,y,bmap... (all size and rotations equal, so ignore)
 void saveNominos (nomino * nominout, FILE * fd) {
-// save in form <size>/<rotation>/[<x>,<y>,<bmap>],[],[]\n
     int ii;
     shapes = 0;
+    // store header info, just size for now
+    fprintf (fd, "%d\n", nominout->size);
 
+    // store blocks
     while (nominout != NULL) {
         for (ii = 0; ii < nominout->size; ii++) {
             if (ii != 0)
-                fprintf (fd, ",[%d,%d,%d]", nominout->blocks[ii]->x,
+                fprintf (fd, ";%d,%d,%d", nominout->blocks[ii]->x,
                         nominout->blocks[ii]->y, nominout->blocks[ii]->bmap);
             else
-                fprintf (fd, "{[%d,%d,%d]", nominout->blocks[ii]->x,
+                fprintf (fd, "%d,%d,%d", nominout->blocks[ii]->x,
                         nominout->blocks[ii]->y, nominout->blocks[ii]->bmap);
         }
-        fprintf (fd, "}\n");
+        fprintf (fd, "\n");
         nominout = nominout->next;
         shapes++;
     }
+}
+
+// load from file and return pointer to head
+nomino * loadNominos (FILE * fd) {
+    nomino * head = NULL;
+    nomino * curr = NULL;
+    nomino * buff = NULL;
+    char * linebuf = NULL;
+    char * blkbuf = NULL;
+    size_t linelen = 0;
+    int blkNum = 0;
+    int size = 0;
+
+    // process header info
+    getline (&linebuf, &linelen, fd);
+    size = (int) strtoul (linebuf, NULL, 10);
+    linebuf = NULL;
+
+    printf ("Size %d loaded\n", size);
+
+    // process block info
+    while (getline (&linebuf, &linelen, fd) != -1) {
+        printf ("line: %s", linebuf);
+        buff = malloc (sizeof (nomino));
+        buff->blocks = malloc (sizeof (block*) * size);
+        
+        // allocate and fill blocks
+        blkNum = 0;
+        while (linebuf != NULL) {
+            blkbuf = strsep (&linebuf, ";");
+            printf ("blk: {%s}\n", blkbuf);
+            buff->blocks[blkNum] = malloc (sizeof (block));
+            // x pos
+            buff->blocks[blkNum]->x = (INT8) strtoul (strsep (&blkbuf, ","), NULL, 10);
+            
+            // y pos
+            buff->blocks[blkNum]->y = (INT8) strtoul (strsep (&blkbuf, ","), NULL, 10);
+
+            // bmap
+            buff->blocks[blkNum]->bmap = (INT8) strtoul (strsep (&blkbuf, ","), NULL, 10);
+
+            blkNum++;
+        }
+       
+        // set the rest of the fields
+        buff->size = size;
+        buff->rot = 0;
+        buff->next = NULL;
+
+        // append or create the list
+        if (head == NULL) {
+            head = buff;
+            curr = head;
+        } else {
+            curr->next = buff;
+            curr = buff;
+        }
+
+        free (linebuf);
+        linebuf = NULL;
+        linelen = 0;
+    }
+
+    return head;
 }
 
 // print all nominos starting with the input shape, to file descriptor fd
