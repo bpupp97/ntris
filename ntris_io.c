@@ -20,6 +20,32 @@ wint_t nomChars[] = {0x2588,        // 0, no flags
     0x2588, 0x2588, 0x2588, 0x2588, // NW, EW, NEW, SW
     0x2588, 0x2588, 0x2588};        // NSW, SEW, NSEW
 
+int estimates[] = {0, 1, 1, 2, 7, 18, 60, 196, 704, 2500, 9189, 33896, 126759};
+extern int numShapes;
+
+/*
+ * void printSts (int, int)
+ *
+ * Prints a status message for amount of nominos that have been generated
+ * out of the theoretical maximum
+ *
+ */
+void printSts (int size) {
+    printf ("\rGenerating %sominos: %d / %d     ",
+                size == 1 ? "mon" :
+                size == 2 ? "d" :
+                size == 3 ? "tri" :
+                size == 4 ? "tetr" :
+                size == 5 ? "pent" :
+                size == 6 ? "hex" :
+                size == 7 ? "hept" :
+                size == 8 ? "oct" :
+                size == 9 ? "non" :
+                size == 10 ? "dec" :
+                size == 11 ? "undec" :
+                size == 12 ? "dodec" :
+                "poly", numShapes, estimates[size]);
+}
 
 /*
  * void saveNominos (nomino *, FILE *)
@@ -31,6 +57,7 @@ wint_t nomChars[] = {0x2588,        // 0, no flags
  * $size
  * $x,$y,$bmap;$x,$y,$bmap...
  * ...
+ * $ENDMARK
  * <EOF>
  *
  */
@@ -52,6 +79,7 @@ void saveNominos (nomino * nominout, FILE * fd) {
         fprintf (fd, "\n");
         nominout = nominout->next;
     }
+    fprintf (fd, ENDMARK);
 }
 
 /*
@@ -81,6 +109,10 @@ nomino * loadNominos (FILE * fd) {
 
     // process block info
     while (getline (&linebuf, &linelen, fd) != -1) {
+        if (strcmp (linebuf, ENDMARK) == 0) {
+            // End of blocks found, this is a complete set
+            break;
+        }
         buff = malloc (sizeof (nomino));
         buff->blocks = malloc (sizeof (block*) * size);
         

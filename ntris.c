@@ -102,8 +102,11 @@ int main (int argc, char * argv[]) {
 
     // begin
     while (noms->size < size) {
+        numShapes = 0;
         newNoms = genNominos (noms);
         noms = newNoms;
+        printSts (noms->size);
+        printf ("\n");
     }
 
     clkEnd = clock();
@@ -155,6 +158,8 @@ int main (int argc, char * argv[]) {
                 size == 8 ? "oct" :
                 size == 9 ? "non" :
                 size == 10 ? "dec" :
+                size == 11 ? "undec" :
+                size == 12 ? "dodec" :
                 "poly",
                 diffTime,
                (float)numShapes / diffTime);
@@ -189,7 +194,6 @@ nomino * genNominos (nomino * headParent) {
         return NULL;
 
     size = headParent->size;
-    numShapes = 0;
 
     // for each nomino
     while (headParent != NULL) {
@@ -287,6 +291,10 @@ nomino * genNominos (nomino * headParent) {
 
                     currChild = currChild->next;
                     numShapes++;
+                    if ((numShapes % 100) == 0) {
+                        printSts (size + 1);
+                        fflush (stdout);
+                    }
                 }
             }
         }

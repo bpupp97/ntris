@@ -29,6 +29,7 @@ typedef struct _nomino nomino;
 #define MAXFNAME        50
 #define MAXPRINTWIDTH   80
 #define PRINTSPACING    4
+#define ENDMARK         "X"
 
 #define USAGE           "USAGE: ntris (-options) <size>\n" \
                         "\n" \
@@ -43,6 +44,7 @@ typedef struct _nomino nomino;
 extern wint_t nomchars[];
 
 // I/O functions
+void printSts (int size);
 void saveNominos (nomino * nominout, FILE * fd);
 nomino * loadNominos (FILE * fd);
 void printNominos (nomino * nominout, FILE * fd);
