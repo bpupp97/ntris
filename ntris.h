@@ -61,6 +61,6 @@ void rotate (nomino * nomspino);
 int compare (nomino * nominone, nomino * nomintwo);
 
 // 'main' function
-nomino * genNominos (nomino * headParent);
+nomino * genNominos (nomino * root, nomino * collection);
 
 #endif // INC_NTRIS_H

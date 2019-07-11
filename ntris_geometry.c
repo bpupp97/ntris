@@ -75,7 +75,7 @@ void rotate (nomino * nomspino) {
         nomspino->blocks[ii]->x = nomspino->blocks[ii]->y * -1;
         nomspino->blocks[ii]->y = buffer;
     }
-    nomspino->rot++;
+    nomspino->rot = (nomspino->rot + 1) % 4;
 }
 
 /*

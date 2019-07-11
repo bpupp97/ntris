@@ -11,8 +11,9 @@ int numShapes;
 int main (int argc, char * argv[]) {
     int opt = 0;
     int size = 0;
-    nomino * noms = NULL;
-    nomino * newNoms = NULL;
+    nomino * roots = NULL;
+    nomino * rootsOld = NULL;
+    nomino * collect = NULL;
     clock_t clkStart;
     clock_t clkEnd;
     float diffTime;
@@ -75,10 +76,10 @@ int main (int argc, char * argv[]) {
             printf (FAILOPEN, loadFile);
             return ERROR;
         }
-        noms = loadNominos (fd);
+        roots = loadNominos (fd);
         fclose (fd);
         fd = NULL;
-        if (noms == NULL) {
+        if (roots == NULL) {
             printf (FAILLOAD);
             return ERROR;
         }
@@ -88,24 +89,30 @@ int main (int argc, char * argv[]) {
     clkStart = clock();
 
     // set up root nomino
-    if (noms == NULL) {
-        noms = malloc (sizeof (nomino));
-        noms->size = 1;
-        noms->rot = 0;
-        noms->blocks = malloc (sizeof (block *));
-        noms->blocks[0] = malloc (sizeof (block));
-        noms->blocks[0]->x = 0;
-        noms->blocks[0]->y = 0;
-        noms->blocks[0]->bmap = 0x00;
-        noms->next = NULL;
+    if (roots == NULL) {
+        roots = malloc (sizeof (nomino));
+        roots->size = 1;
+        roots->rot = 0;
+        roots->blocks = malloc (sizeof (block *));
+        roots->blocks[0] = malloc (sizeof (block));
+        roots->blocks[0]->x = 0;
+        roots->blocks[0]->y = 0;
+        roots->blocks[0]->bmap = 0x00;
+        roots->next = NULL;
     }
 
     // begin
-    while (noms->size < size) {
+    while (roots->size < size) {
         numShapes = 0;
-        newNoms = genNominos (noms);
-        noms = newNoms;
-        printSts (noms->size);
+        while (roots != NULL) {
+            collect = genNominos (roots, collect);
+            rootsOld = roots;
+            roots = roots->next;
+            free (rootsOld);
+        }
+        roots = collect;
+        collect = NULL;
+        printSts (roots->size);
         printf ("\n");
     }
 
@@ -125,7 +132,7 @@ int main (int argc, char * argv[]) {
         }
 
         // do printing
-        printNominos (noms, fd);
+        printNominos (roots, fd);
 
         if (fd != NULL && fd != stdout) {
             fclose (fd);
@@ -140,7 +147,7 @@ int main (int argc, char * argv[]) {
             printf (FAILOPEN, outFile); // not fatal, just print to stdout
             fd = stdout;
         } 
-        saveNominos (noms, fd);
+        saveNominos (roots, fd);
         if (fd != stdout)
             fclose (fd);
     }
@@ -170,140 +177,133 @@ int main (int argc, char * argv[]) {
 /*
  * nomino * genNominos (nomino *)
  *
- * Generates a linked list of nominos one size larger than the one passed in
- * as parameter. Uses this parameter list as the root shapes, and frees all
- * memory from the input list as it traverses
+ * Takes a root shape and a collection of shapes 1 larger than root, generates
+ * all unique shapes as children of root that do not exist in collection. new
+ * shapes are prepended to the list
  *
- * Returns: head of linked list of larger set of unique shapes
+ * Returns: updated collection using children of root
  *
  */
-nomino * genNominos (nomino * headParent) {
+nomino * genNominos (nomino * root, nomino * collection) {
     int size = -1;
     int ii = 0;
     int jj = 0;
     int kk = 0;
     int dup = 0;
     int status = OK;
-    nomino * headChild = NULL; // head of list to return
-    nomino * currChild = NULL; // position in list
-    nomino * compChild = NULL; // pointer to compare for duplicates
-    nomino * buffChild = NULL; // nomino being worked on / checked
-    nomino * lastParent = NULL;// pointer to parent nomino to free
-
-    if (headParent == NULL)
+    nomino * head = collection; // end position in list
+    nomino * comp = NULL; // pointer to compare for duplicates
+    nomino * buff = NULL; // nomino being worked on / checked
+    
+    if (root == NULL)
         return NULL;
 
-    size = headParent->size;
+    size = root->size;
 
-    // for each nomino
-    while (headParent != NULL) {
-        buffChild = duplicateGrow (headParent);
-        // for each block
-        for (ii = 0; ii < size; ii++) {
-            // for each direction
-            for (jj = 0; jj < 4; jj++) {
-                // if bmap has a 1 at this direction, skip
-                if ((buffChild->blocks[ii]->bmap & (0x01 << jj)) != 0)
-                    continue;
+    buff = duplicateGrow (root);
+    // for each block
+    for (ii = 0; ii < size; ii++) {
+        // for each direction
+        for (jj = 0; jj < 4; jj++) {
+            // if bmap has a 1 at this direction, skip
+            if ((buff->blocks[ii]->bmap & (0x01 << jj)) != 0)
+                continue;
 
-                // add block in direction of jj
-                switch (jj) {
-                    case 0: // north
-                        status = addBlock (buffChild,
-                                    buffChild->blocks[ii]->x,
-                                    buffChild->blocks[ii]->y - 1);
+            // add block in direction of jj
+            switch (jj) {
+                case 0: // north
+                    status = addBlock (buff,
+                                buff->blocks[ii]->x,
+                                buff->blocks[ii]->y - 1);
+                    break;
+
+                case 1: // east
+                    status = addBlock (buff,
+                                buff->blocks[ii]->x + 1,
+                                buff->blocks[ii]->y);
+                    break;
+
+                case 2: // south
+                    status = addBlock (buff,
+                                buff->blocks[ii]->x,
+                                buff->blocks[ii]->y + 1);
+                    break;
+
+                case 3: // west
+                    status = addBlock (buff,
+                                buff->blocks[ii]->x - 1,
+                                buff->blocks[ii]->y);
+                    break;
+
+                default:
+                    status = ERROR;
+                    break;
+            }
+            
+            if (status == ERROR)
+                continue;
+
+            // if list is empty, obviously not a duplicate, add now
+            if (collection == NULL) {
+                normalize (buff);
+                collection = duplicate (buff);
+
+                // update bitmap
+                collection->blocks[ii]->bmap |= (0x01 << (jj % 4));
+                collection->blocks[size]->bmap = 0x01 << ((jj + 2) % 4);
+
+                head = collection;
+                numShapes++;
+                continue;
+            }
+
+            // loop through rotations
+            dup = 0;
+            for (kk = 0; kk < 4; kk++) {
+                rotate (buff);
+                
+                // normalize coords
+                normalize (buff);
+               
+                // check if unique
+                comp = head;
+                while (comp != NULL) {
+                    if (compare (buff, comp) == OK) {
+                        dup = 1;
                         break;
-
-                    case 1: // east
-                        status = addBlock (buffChild,
-                                    buffChild->blocks[ii]->x + 1,
-                                    buffChild->blocks[ii]->y);
-                        break;
-
-                    case 2: // south
-                        status = addBlock (buffChild,
-                                    buffChild->blocks[ii]->x,
-                                    buffChild->blocks[ii]->y + 1);
-                        break;
-
-                    case 3: // west
-                        status = addBlock (buffChild,
-                                    buffChild->blocks[ii]->x - 1,
-                                    buffChild->blocks[ii]->y);
-                        break;
-
-                    default:
-                        status = ERROR;
-                        break;
+                    }
+                    comp = comp->next;
                 }
                 
-                if (status == ERROR)
-                    continue;
+                if (dup)
+                    break;
+            }
 
-                // if head is NULL, list is empty, so obviously not a duplicate, add now
-                if (headChild == NULL) {
-                    normalize (buffChild);
-                    headChild = duplicate (buffChild);
+            while (buff->rot !=0)
+                rotate (buff);
 
-                    // update bitmap
-                    headChild->blocks[ii]->bmap |= (0x01 << (jj % 4));
-                    headChild->blocks[size]->bmap = 0x01 << ((jj + 2) % 4);
+            normalize(buff);
 
-                    currChild = headChild;
-                    numShapes++;
-                    continue;
-                }
+            // Add if not a duplicate 
+            if (!dup) {
+                buff->next = head;
+                head = duplicate (buff);
 
-                // loop through rotations
-                dup = 0;
-                for (kk = 0; kk < 4; kk++) {
-                    rotate (buffChild);
-                    
-                    // normalize coords
-                    normalize (buffChild);
-                   
-                    // check if unique
-                    compChild = headChild;
-                    while (compChild != NULL) {
-                        if (compare (buffChild, compChild) == OK) {
-                            dup = 1;
-                            break;
-                        }
-                        compChild = compChild->next;
-                    }
-                    
-                    if (dup)
-                        break;
-                }
+                // update block bitmaps
+                head->blocks[ii]->bmap |= (0x01 << (jj % 4));
+                head->blocks[size]->bmap = 0x01 << ((jj + 2) % 4);
 
-                while (buffChild->rot !=0)
-                    rotate (buffChild);
-
-                normalize(buffChild);
-
-                // Add if not a duplicate 
-                if (!dup) {
-                    currChild->next = duplicate (buffChild);
-
-                    // update block bitmaps
-                    currChild->next->blocks[ii]->bmap |= (0x01 << (jj % 4));
-                    currChild->next->blocks[size]->bmap = 0x01 << ((jj + 2) % 4);
-
-                    currChild = currChild->next;
-                    numShapes++;
-                    if ((numShapes % 100) == 0) {
-                        printSts (size + 1);
-                        fflush (stdout);
-                    }
+                numShapes++;
+                if ((numShapes % 100) == 0) {
+                    printSts (size + 1);
+                    fflush (stdout);
                 }
             }
         }
-        freeNomino (&buffChild);
-        lastParent = headParent;
-        headParent = headParent->next;
-        freeNomino (&lastParent);
     }
-    return headChild;
+    freeNomino (&buff);
+
+    return head;
 }
 
 

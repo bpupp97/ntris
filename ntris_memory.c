@@ -62,8 +62,7 @@ nomino * duplicateGrow (nomino * parentNomino) {
 /*
  * nomino * duplicate (nomino *)
  *
- * Returns a copy of the nomino passed in with a similar size. The blocks, size,
- * and rotation fields are duplicated, and the next field is set to NULL
+ * Returns a copy of the nomino passed in with a similar size.
  *
  * Returns: duplicated nomino on success, NULL on error
  *
@@ -76,7 +75,7 @@ nomino * duplicate (nomino * parentNomino) {
     childNomino->size = parentNomino->size;
     childNomino->blocks = malloc (sizeof (block *) * childNomino->size);
     childNomino->rot = parentNomino->rot;
-    childNomino->next = NULL;
+    childNomino->next = parentNomino->next;
 
     // copy the parents blocks in
     for (ii = 0; ii < parentNomino->size; ii++) {
