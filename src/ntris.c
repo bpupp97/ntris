@@ -260,7 +260,7 @@ nomino * genNominos (nomino * root, nomino * collection) {
             // loop through rotations
             dup = 0;
             for (kk = 0; kk < 4; kk++) {
-                rotate (buff);
+                rotate (buff, 1);
                 
                 // normalize coords
                 normalize (buff);
@@ -279,8 +279,7 @@ nomino * genNominos (nomino * root, nomino * collection) {
                     break;
             }
 
-            while (buff->rot !=0)
-                rotate (buff);
+            rotate (buff, 4 - buff->rot);
 
             normalize(buff);
 

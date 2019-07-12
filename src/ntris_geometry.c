@@ -63,19 +63,38 @@ void normalize (nomino * nominormal) {
 /* 
  * void rotate (nomino *)
  *
- * Rotates the given nomino's blocks by 90 degrees clockwise, and updates the
+ * Rotates the given nomino's blocks by 90 degrees clockwise * amount, and updates the
  * rotation attribute
  *
  */
-void rotate (nomino * nomspino) {
+void rotate (nomino * nomspino, int amount) {
     int buffer = 0;
     int ii;
-    for (ii = 0; ii < nomspino->size; ii++) {
-        buffer = nomspino->blocks[ii]->x;
-        nomspino->blocks[ii]->x = nomspino->blocks[ii]->y * -1;
-        nomspino->blocks[ii]->y = buffer;
+
+    if (amount == 1) {
+        // rot90:  x = -y, y = x
+        for (ii = 0; ii < nomspino->size; ii++) {
+            buffer = nomspino->blocks[ii]->x;
+            nomspino->blocks[ii]->x = nomspino->blocks[ii]->y * -1;
+            nomspino->blocks[ii]->y = buffer;
+        }
+    } else if (amount == 2) {
+        // rot180: x = -x, y = -y
+        for (ii = 0; ii < nomspino->size; ii++) {
+            nomspino->blocks[ii]->x *= -1;
+            nomspino->blocks[ii]->y *= -1;
+        }
+    } else if (amount == 3) {
+        // rot270: x = y, y = -x
+        for (ii = 0; ii < nomspino->size; ii++) {
+            buffer = nomspino->blocks[ii]->x;
+            nomspino->blocks[ii]->x = nomspino->blocks[ii]->y;
+            nomspino->blocks[ii]->y = buffer * -1;
+        }
+    } else {
+        return;
     }
-    nomspino->rot = (nomspino->rot + 1) % 4;
+    nomspino->rot = (nomspino->rot + amount) % 4;
 }
 
 /*

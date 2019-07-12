@@ -57,7 +57,7 @@ nomino * duplicate (nomino * parentNomino);
 // geometric functions
 int addBlock (nomino * frankenomino, int xPos, int yPos);
 void normalize (nomino * nominormal);
-void rotate (nomino * nomspino);
+void rotate (nomino * nomspino, int amount);
 int compare (nomino * nominone, nomino * nomintwo);
 
 // 'main' function
