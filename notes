@@ -1,0 +1,29 @@
+Save/LoadPartial
+    - Save shapes to file as they are added to the list
+    - Add new mark to end of file on saves to determine full completion
+    - If not full completion, compare the 2nd last blocks of the partial save
+        - determine when a new root was used
+        - find that roots position in fully completed (size-1) save
+        - begin processing using that root, and any afterwards
+        - nomino list to check against will be the full partial save
+    - Requires SIGINT handler to close file for proper write
+        - Could also write out the last completed root for better resume speed
+
+Updated Verification Algorithm
+    - Similar to a merge sort algorithm
+    - Generate list of 'children' nodes corresponding to 'root' nodes used to create them
+        - Each pass of genNominos will only compare duplicates from the same root
+    - For each list of children nodes:
+        - Compare to all previous root nodes
+            - if root node shape found within child, remove child
+        - Add remaining children to global list 
+    - global list becomes new list of 'root' nodes, expand until size is reached
+
+Multithreading Support
+    - Will be very easy once updated algorithm in place (in theory)
+    - Keep global pointer to next available root to expand
+    - Locks/checks around accessing this pointer
+    - Thread takes the root, sets pointer to root->next, expands on that root
+    - Store 'children' in global array similar to other global pointer
+    - For now, join threads after expansion and do verification step on single thread
+
