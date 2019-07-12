@@ -122,7 +122,7 @@ int main (int argc, char * argv[]) {
         currChild = children[0];
         numChildren = 1;
         rootPos = 0;
-        for (;;) {
+        while (currChild != NULL) {
             if (currChild->next == NULL) { // end of single roots children
                 rootPos++;
                 if (rootPos >= numRoots) // end of roots
