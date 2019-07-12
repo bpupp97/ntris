@@ -101,7 +101,7 @@ int main (int argc, char * argv[]) {
         numRoots = 1;
     }
 
-    // begin
+    // begin generation
     while (roots->size < size) {
         // reset shape counter
         numShapes = 0;
@@ -121,8 +121,8 @@ int main (int argc, char * argv[]) {
 
         // concat the children
         currChild = children[0];
-        rootPos = 0;
         numChildren = 1;
+        rootPos = 0;
         for (;;) {
             if (currChild->next == NULL) { // end of single roots children
                 rootPos++;
@@ -137,7 +137,7 @@ int main (int argc, char * argv[]) {
 
         // cleanup, setup roots for next iteration
         freeNominoList (roots);
-        roots = children[0];
+        roots = *children;
         numRoots = numChildren;
         free (children);
         children = NULL;
@@ -313,7 +313,8 @@ nomino * genNominos (nomino * root) {
 
             // Add if not a duplicate 
             if (!dup) {
-                collectEnd = duplicate (buff);
+                collectEnd->next = duplicate (buff);
+                collectEnd = collectEnd->next;
 
                 // update block bitmaps
                 collectEnd->blocks[ii]->bmap |= (0x01 << (jj % 4));
