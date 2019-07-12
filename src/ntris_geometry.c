@@ -116,7 +116,7 @@ int compare (nomino * nominone, nomino * nomintwo) {
         return ERROR;
 
     found = 0;
-    for (ii = 0; ii < nomintwo->size; ii++) {
+    for (ii = 0; ii < nominone->size; ii++) {
         for (jj = 0; jj < nomintwo->size; jj++) {
             if (nominone->blocks[ii]->x == nomintwo->blocks[jj]->x &&
                 nominone->blocks[ii]->y == nomintwo->blocks[jj]->y) {
@@ -138,6 +138,8 @@ int compare (nomino * nominone, nomino * nomintwo) {
  *
  * Modifies the collection to remove any nominos containing the roots between
  * rStart and rEnd, only left inclusive
+ *
+ * TODO: needs to check all rotations and offsets that the roots could be in...yikes
  *
  * RETURNS: none
  */
