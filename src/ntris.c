@@ -11,7 +11,6 @@ int estimates[] = {0, 1, 1, 2, 7, 18, 60, 196, 704, 2500, 9189, 33896, 126759};
 
 int main (int argc, char * argv[]) {
     int size = 0;
-    int ii = 0;
     int rootPos = 0;
     int numRoots = 0;
     int numChildren = 0;
