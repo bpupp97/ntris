@@ -114,7 +114,7 @@ int main (int argc, char * argv[]) {
         rootPos = 0;
         while (lastRoot != NULL) {
             children[rootPos] = genNominos (lastRoot);
-            // TODO: look into moving validation/concat here to save on loops
+            removeSubRoots (&(children[rootPos]), roots, lastRoot);
             rootPos++;
             lastRoot = lastRoot->next;
         }

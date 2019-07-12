@@ -100,7 +100,9 @@ void rotate (nomino * nomspino, int amount) {
 /*
  * int compare (nomino *, nomino *)
  *
- * Compares the blocks in the two nomino structures to check for equality
+ * Compares the blocks in the two nomino structures to check for equality,
+ * unequal sizes are allowed so long as the larger nomino is the first
+ * parameter
  *
  * Returns: OK if equal, ERROR if not
  *
@@ -110,11 +112,11 @@ int compare (nomino * nominone, nomino * nomintwo) {
     int jj;
     int found;
 
-    if (nominone->size != nomintwo->size)
+    if (nominone->size < nomintwo->size)
         return ERROR;
 
     found = 0;
-    for (ii = 0; ii < nominone->size; ii++) {
+    for (ii = 0; ii < nomintwo->size; ii++) {
         for (jj = 0; jj < nomintwo->size; jj++) {
             if (nominone->blocks[ii]->x == nomintwo->blocks[jj]->x &&
                 nominone->blocks[ii]->y == nomintwo->blocks[jj]->y) {
@@ -125,9 +127,54 @@ int compare (nomino * nominone, nomino * nomintwo) {
         }
     }
 
-    if (found == nominone->size)
+    if (found == nomintwo->size)
         return OK;
     
     return ERROR;
 }
 
+/*
+ * void removeSubRoots (nomino ** collection, nomino * rootsStart, nomino * rootsEnd)
+ *
+ * Modifies the collection to remove any nominos containing the roots between
+ * rStart and rEnd, only left inclusive
+ *
+ * RETURNS: none
+ */
+ 
+void removeSubRoots (nomino ** collection, nomino * rStart, nomino * rEnd) {
+    nomino * rCurr = NULL;
+    nomino * collectCurr = *collection;
+    nomino * collectPrev = NULL;
+    int found = -1; // using -1 for not found, OK (0) for found
+
+    while (collectCurr != NULL) {   // for each item in collection
+        rCurr = rStart;
+        found = -1;
+        while (rCurr != NULL && rCurr != rEnd) { // for each root in range
+            if ((found = compare (collectCurr, rCurr)) == OK) { 
+                // sub-root found, remove
+                if (collectPrev != NULL) {
+                    // middle of list, can just do unlink
+                    collectPrev->next = collectCurr->next;
+                    freeNomino (&collectCurr);
+                    collectCurr = collectPrev->next;
+                } else {
+                    // start of list, need to also update pointer given
+                    *collection = (*collection)->next;
+                    freeNomino (&collectCurr);
+                    collectCurr = *collection;
+                }
+                break;
+            }
+
+            rCurr = rCurr->next;
+        }
+        
+        if (found == -1) {
+            // not found, ignore and step through list
+            collectPrev = collectCurr;
+            collectCurr = collectCurr->next;
+        }
+    }
+}

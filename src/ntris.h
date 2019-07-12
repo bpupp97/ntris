@@ -60,6 +60,7 @@ int addBlock (nomino * frankenomino, int xPos, int yPos);
 void normalize (nomino * nominormal);
 void rotate (nomino * nomspino, int amount);
 int compare (nomino * nominone, nomino * nomintwo);
+void removeSubRoots (nomino ** collection, nomino * rStart, nomino * rEnd);
 
 // 'main' function
 nomino * genNominos (nomino * root);
