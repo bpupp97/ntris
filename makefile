@@ -7,7 +7,7 @@ OBJ=$(SRC:.c=.o)
 OUTFILE=./ntris
 
 ntris: $(OBJ)
-	gcc $(SRC) $(CCFLAGS) -o $(OUTFILE)
+	gcc $(OBJ) $(CCFLAGS) -o $(OUTFILE)
 
 .PHONY: clean
 

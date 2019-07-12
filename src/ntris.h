@@ -46,11 +46,12 @@ extern wint_t nomchars[];
 // I/O functions
 void printSts (int size);
 void saveNominos (nomino * nominout, FILE * fd);
-nomino * loadNominos (FILE * fd);
+nomino * loadNominos (FILE * fd, int * numNoms);
 void printNominos (nomino * nominout, FILE * fd);
 
 // memory management functions
 void freeNomino (nomino ** nullmino);
+void freeNominoList (nomino * nullmino);
 nomino * duplicateGrow (nomino * parentNomino);
 nomino * duplicate (nomino * parentNomino);
 
@@ -61,6 +62,6 @@ void rotate (nomino * nomspino, int amount);
 int compare (nomino * nominone, nomino * nomintwo);
 
 // 'main' function
-nomino * genNominos (nomino * root, nomino * collection);
+nomino * genNominos (nomino * root);
 
 #endif // INC_NTRIS_H
