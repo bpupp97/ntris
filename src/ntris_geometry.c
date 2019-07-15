@@ -129,8 +129,17 @@ int compare (nomino * nominone, nomino * nomintwo) {
         }
     }
 
-    if (found == nomintwo->size)
+    if (found == nomintwo->size) {
+        #ifdef DEBUG
+        if (nominone->size != nomintwo->size) {
+            printf ("=== Root match found ===\n");
+            printNomStruct (nominone);
+            printNomStruct (nomintwo);
+            printf ("========================\n\n");
+        }
+        #endif
         return OK;
+    }
     
     return ERROR;
 }

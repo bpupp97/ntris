@@ -29,6 +29,8 @@ Multithreading Support
 
 Optimize compare
     - Instead of counting matches count mismatches, if mismatches > size difference exit fail
+    - consider using (possibly binary) insertion sort when adding blocks, which would vastly
+        reduce the amount of operations in each compare call (On2 -> On)
 
 Fix validation
     - For all 4 rotations:

@@ -102,9 +102,6 @@ int main (int argc, char * argv[]) {
 
     // begin generation
     while (roots->size < size) {
-        // reset shape counter
-        numShapes = 0;
-        
         // init collection pointers
         children = malloc (sizeof (nomino *) * numRoots); 
 
@@ -179,6 +176,7 @@ int main (int argc, char * argv[]) {
     }
 
     // count
+    numShapes = 0;
     while (roots != NULL) {
         numShapes++;
         roots = roots->next;

@@ -220,3 +220,17 @@ void printNominos (nomino * nominout, FILE * fd) {
     free (screen);
 }
 
+#ifdef DEBUG
+void printNomStruct (nomino * nom) {
+    int ii = 0;
+    printf ("Struct Nomino @ %p {\n"
+            "    size : %d\n"
+            "     rot : %d\n"
+            "    next : %p\n"
+            "  blocks : \n", nom, nom->size, nom->rot, nom->next);
+    for (ii = 0; ii < nom->size; ii++) {
+        printf ("    {%d, %d, %d}\n", nom->blocks[ii]->x, nom->blocks[ii]->y,
+                                    nom->blocks[ii]->bmap);
+    }
+}
+#endif
