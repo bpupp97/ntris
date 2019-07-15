@@ -1,5 +1,6 @@
 #include "ntris.h"
 
+extern int numShapes;
 /* 
  * int addBlock (nomino *, int, int)
  *
@@ -36,7 +37,8 @@ int addBlock (nomino * frankenomino, int xPos, int yPos) {
  * integers >=0 and retain the same shape
  *
  */
-void normalize (nomino * nominormal) {
+void normalize (nomino * nominormal) { normalizeOffset (nominormal, 0, 0); }
+void normalizeOffset (nomino * nominormal, int baseX, int baseY) {
     int ii = 0;
     int minX = 255;
     int minY = 255;
@@ -50,13 +52,13 @@ void normalize (nomino * nominormal) {
     }
 
     // nothing to do if offsets are 0
-    if (minX == 0 && minY == 0)
+    if (minX == baseX && minY == baseY)
         return;
 
     // subtract offsets
     for (ii = 0; ii < nominormal->size; ii++) {
-        nominormal->blocks[ii]->x -= minX;
-        nominormal->blocks[ii]->y -= minY;
+        nominormal->blocks[ii]->x -= minX - baseX;
+        nominormal->blocks[ii]->y -= minY - baseY;
     }
 }
 
@@ -149,27 +151,66 @@ void removeSubRoots (nomino ** collection, nomino * rStart, nomino * rEnd) {
     nomino * collectCurr = *collection;
     nomino * collectPrev = NULL;
     int found = -1; // using -1 for not found, OK (0) for found
+    int rot = 0;
+    int offset = 0;
 
     while (collectCurr != NULL) {   // for each item in collection
         rCurr = rStart;
         found = -1;
         while (rCurr != NULL && rCurr != rEnd) { // for each root in range
-            if ((found = compare (collectCurr, rCurr)) == OK) { 
-                // sub-root found, remove
-                if (collectPrev != NULL) {
-                    // middle of list, can just do unlink
-                    collectPrev->next = collectCurr->next;
-                    freeNomino (&collectCurr);
-                    collectCurr = collectPrev->next;
-                } else {
-                    // start of list, need to also update pointer given
-                    *collection = (*collection)->next;
-                    freeNomino (&collectCurr);
-                    collectCurr = *collection;
-                }
-                break;
-            }
+            for (rot = 0; rot < 4; rot++) {
+                // rotate
+                rotate (collectCurr, 1);
 
+                for (offset = 0; offset < 5; offset++) {
+                    // normalize with offsets
+                    switch (offset) {
+                        case 0:
+                            normalizeOffset (collectCurr, 0, 1);
+                            break;
+
+                        case 1:
+                            normalizeOffset (collectCurr, 1, 0);
+                            break;
+
+                        case 2:
+                            normalizeOffset (collectCurr, 0, -1);
+                            break;
+
+                        case 3:
+                            normalizeOffset (collectCurr, -1, 0);
+                            break;
+
+                        case 4:
+                            // other orders are arbitrary, but 0,0 MUST be last to retain orig shape
+                            normalizeOffset (collectCurr, 0, 0);
+                            break;
+
+                        default:
+                            break;
+                    }
+
+                    if ((found = compare (collectCurr, rCurr)) == OK) { 
+                        // sub-root found, remove
+                        if (collectPrev != NULL) {
+                            // middle of list, can just do unlink
+                            collectPrev->next = collectCurr->next;
+                            freeNomino (&collectCurr);
+                            collectCurr = collectPrev->next;
+                        } else {
+                            // start of list, need to also update pointer given
+                            *collection = (*collection)->next;
+                            freeNomino (&collectCurr);
+                            collectCurr = *collection;
+                        }
+                        break;
+                    }
+                }
+                if (found == OK)
+                    break;
+            }
+            if (found == OK)
+                break;
             rCurr = rCurr->next;
         }
         

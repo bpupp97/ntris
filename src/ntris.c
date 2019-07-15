@@ -144,7 +144,7 @@ int main (int argc, char * argv[]) {
 
     clkEnd = clock();
     diffTime = (float) (clkEnd - clkStart) / CLOCKS_PER_SEC;
-    
+
     // open file for printing
     if (!quiet) {
         if (strcmp (outFile, "") != 0) {
@@ -176,6 +176,12 @@ int main (int argc, char * argv[]) {
         saveNominos (roots, fd);
         if (fd != stdout)
             fclose (fd);
+    }
+
+    // count
+    while (roots != NULL) {
+        numShapes++;
+        roots = roots->next;
     }
 
     // print stats
@@ -280,7 +286,6 @@ nomino * genNominos (nomino * root) {
                 collect->blocks[size]->bmap = 0x01 << ((jj + 2) % 4);
 
                 collectEnd = collect;
-                numShapes++;
                 continue;
             }
 
@@ -318,12 +323,6 @@ nomino * genNominos (nomino * root) {
                 // update block bitmaps
                 collectEnd->blocks[ii]->bmap |= (0x01 << (jj % 4));
                 collectEnd->blocks[size]->bmap = 0x01 << ((jj + 2) % 4);
-
-                numShapes++;
-                if ((numShapes % 100) == 0) {
-                    printSts (size + 1);
-                    fflush (stdout);
-                }
             }
         }
     }
