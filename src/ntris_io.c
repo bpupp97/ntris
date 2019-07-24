@@ -171,6 +171,9 @@ void printNominos (nomino * nominout, FILE * fd) {
     int ii;
     int jj;
 
+    if (nominout == NULL)
+        return;
+
     size = nominout->size;
     numcols = MAXPRINTWIDTH / (size + PRINTSPACING);
 

@@ -41,7 +41,7 @@ typedef struct _nomino nomino;
 #define FAILOPEN        "Failed to open file: %s\n"
 #define FAILLOAD        "Failed to load nominos: Invalid Data\n"
 
-#define DEBUG
+//#define DEBUG
 #ifdef DEBUG
 void printNomStruct (nomino * nom);
 #endif

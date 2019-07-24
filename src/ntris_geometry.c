@@ -129,17 +129,8 @@ int compare (nomino * nominone, nomino * nomintwo) {
         }
     }
 
-    if (found == nomintwo->size) {
-        #ifdef DEBUG
-        if (nominone->size != nomintwo->size) {
-            printf ("=== Root match found ===\n");
-            printNomStruct (nominone);
-            printNomStruct (nomintwo);
-            printf ("========================\n\n");
-        }
-        #endif
+    if (found == nomintwo->size)
         return OK;
-    }
     
     return ERROR;
 }
@@ -149,8 +140,6 @@ int compare (nomino * nominone, nomino * nomintwo) {
  *
  * Modifies the collection to remove any nominos containing the roots between
  * rStart and rEnd, only left inclusive
- *
- * TODO: needs to check all rotations and offsets that the roots could be in...yikes
  *
  * RETURNS: none
  */
@@ -166,7 +155,7 @@ void removeSubRoots (nomino ** collection, nomino * rStart, nomino * rEnd) {
     while (collectCurr != NULL) {   // for each item in collection
         rCurr = rStart;
         found = -1;
-        while (rCurr != NULL && rCurr != rEnd) { // for each root in range
+        while (rCurr != rEnd) { // for each root in range
             for (rot = 0; rot < 4; rot++) {
                 // rotate
                 rotate (collectCurr, 1);

@@ -11,7 +11,7 @@ int estimates[] = {0, 1, 1, 2, 7, 18, 60, 196, 704, 2500, 9189, 33896, 126759};
 
 int main (int argc, char * argv[]) {
     int size = 0;
-    int rootPos = 0;
+    int ii = 0;
     int numRoots = 0;
     int numChildren = 0;
     nomino * roots = NULL;
@@ -107,28 +107,33 @@ int main (int argc, char * argv[]) {
 
         // populate children collections
         lastRoot = roots;
-        rootPos = 0;
-        while (lastRoot != NULL) {
-            children[rootPos] = genNominos (lastRoot);
-            removeSubRoots (&(children[rootPos]), roots, lastRoot);
-            rootPos++;
+        for (ii = 0; ii < numRoots; ii++) {
+            children[ii] = genNominos (lastRoot);
+            removeSubRoots (&(children[ii]), roots, lastRoot);
             lastRoot = lastRoot->next;
         }
 
-        // concat the children
-        currChild = children[0];
-        numChildren = 1;
-        rootPos = 0;
-        while (currChild != NULL) {
-            if (currChild->next == NULL) { // end of single roots children
-                rootPos++;
-                if (rootPos >= numRoots) // end of roots
-                    break;
+        // concatenate the children
+        numChildren = 0;
+        currChild = NULL;
+        for (ii = 0; ii < numRoots; ii++) {
+            // skip NULL sets
+            if (children[ii] == NULL)
+                continue;
+            
+            // Link last child found if applicable
+            if (currChild != NULL)
+                currChild->next = children[ii];
 
-                currChild->next = children[rootPos];
-            }
-            currChild = currChild->next;
+            // Get the list head
+            currChild = children[ii];
             numChildren++;
+
+            // rest of children
+            while (currChild->next != NULL) {
+                currChild = currChild->next;
+                numChildren++;
+            }
         }
 
         // cleanup, setup roots for next iteration
