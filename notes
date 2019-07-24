@@ -10,14 +10,11 @@ Save/LoadPartial
         - Could also write out the last completed root for better resume speed
 
 Updated Verification Algorithm
-    - Similar to a merge sort algorithm
-    - Generate list of 'children' nodes corresponding to 'root' nodes used to create them
-        - Each pass of genNominos will only compare duplicates from the same root
-    - For each list of children nodes:
-        - Compare to all previous root nodes
-            - if root node shape found within child, remove child
-        - Add remaining children to global list 
-    - global list becomes new list of 'root' nodes, expand until size is reached
+    - It works, but it is slower than the traditional algorithm currently
+    - Speed would obviously increase with multithreading support, which is much
+        easier to do on this method
+    - Could keep a 'lineage' field to determine if there is a possibility for match
+        or if the two shapes have deviated too far
 
 Multithreading Support
     - Will be very easy once updated algorithm in place (in theory)
@@ -32,6 +29,3 @@ Optimize compare
     - consider using (possibly binary) insertion sort when adding blocks, which would vastly
         reduce the amount of operations in each compare call (On2 -> On)
 
-Fix validation
-    - For all 4 rotations:
-        - Check all 5 offsets of child (0, x+, x-, y+, y-) for root, normalized
