@@ -113,26 +113,29 @@ int compare (nomino * nominone, nomino * nomintwo) {
     int ii;
     int jj;
     int found;
+    int allowDif;
 
     if (nominone->size < nomintwo->size)
         return ERROR;
+    
+    allowDif = nominone->size - nomintwo->size;
 
-    found = 0;
     for (ii = 0; ii < nominone->size; ii++) {
+        found = 0;
         for (jj = 0; jj < nomintwo->size; jj++) {
             if (nominone->blocks[ii]->x == nomintwo->blocks[jj]->x &&
                 nominone->blocks[ii]->y == nomintwo->blocks[jj]->y) {
-                found++;
-                
+                found = 1;
                 break;
             }
         }
+        if (!found) {
+            if (--allowDif < 0 )
+                return ERROR;
+        }
     }
 
-    if (found == nomintwo->size)
-        return OK;
-    
-    return ERROR;
+    return OK;
 }
 
 /*
