@@ -20,7 +20,7 @@ wint_t nomChars[] = {0x2588,        // 0, no flags
     0x2588, 0x2588, 0x2588, 0x2588, // NW, EW, NEW, SW
     0x2588, 0x2588, 0x2588};        // NSW, SEW, NSEW
 
-int estimates[] = {0, 1, 1, 2, 7, 18, 60, 196, 704, 2500, 9189, 33896, 126759};
+extern int estimates[];
 extern int numShapes;
 
 /*
@@ -91,7 +91,7 @@ void saveNominos (nomino * nominout, FILE * fd) {
  * Returns: nomino * to head of list, or NULL on error
  *
  */
-nomino * loadNominos (FILE * fd) {
+nomino * loadNominos (FILE * fd, int * numNoms) {
     nomino * head = NULL;
     nomino * curr = NULL;
     nomino * buff = NULL;
@@ -108,11 +108,13 @@ nomino * loadNominos (FILE * fd) {
 
 
     // process block info
+    *numNoms = 0;
     while (getline (&linebuf, &linelen, fd) != -1) {
         if (strcmp (linebuf, ENDMARK) == 0) {
             // End of blocks found, this is a complete set
             break;
         }
+        (*numNoms)++;
         buff = malloc (sizeof (nomino));
         buff->blocks = malloc (sizeof (block*) * size);
         
@@ -169,6 +171,9 @@ void printNominos (nomino * nominout, FILE * fd) {
     int ii;
     int jj;
 
+    if (nominout == NULL)
+        return;
+
     size = nominout->size;
     numcols = MAXPRINTWIDTH / (size + PRINTSPACING);
 
@@ -218,3 +223,17 @@ void printNominos (nomino * nominout, FILE * fd) {
     free (screen);
 }
 
+#ifdef DEBUG
+void printNomStruct (nomino * nom) {
+    int ii = 0;
+    printf ("Struct Nomino @ %p {\n"
+            "    size : %d\n"
+            "     rot : %d\n"
+            "    next : %p\n"
+            "  blocks : \n", nom, nom->size, nom->rot, nom->next);
+    for (ii = 0; ii < nom->size; ii++) {
+        printf ("    {%d, %d, %d}\n", nom->blocks[ii]->x, nom->blocks[ii]->y,
+                                    nom->blocks[ii]->bmap);
+    }
+}
+#endif

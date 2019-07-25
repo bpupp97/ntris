@@ -7,13 +7,20 @@
 #include "ntris.h"
 
 int numShapes;
+int estimates[] = {0, 1, 1, 2, 7, 18, 60, 196, 704, 2500, 9189, 33896, 126759};
 
 int main (int argc, char * argv[]) {
-    int opt = 0;
     int size = 0;
+    int ii = 0;
+    int numRoots = 0;
+    int numChildren = 0;
     nomino * roots = NULL;
-    nomino * rootsOld = NULL;
-    nomino * collect = NULL;
+    nomino * lastRoot = NULL;
+    nomino * currChild = NULL;
+    nomino ** children = NULL;
+
+    int opt = 0;
+    int quiet = 0;
     clock_t clkStart;
     clock_t clkEnd;
     float diffTime;
@@ -21,7 +28,6 @@ int main (int argc, char * argv[]) {
     char loadFile[MAXFNAME] = "";
     char saveFile[MAXFNAME] = "";
     FILE * fd = NULL;
-    int quiet = 0;
 
     // Check arguments
     while ((opt = getopt (argc, argv, ":o:s:l:q")) != -1) {
@@ -76,7 +82,7 @@ int main (int argc, char * argv[]) {
             printf (FAILOPEN, loadFile);
             return ERROR;
         }
-        roots = loadNominos (fd);
+        roots = loadNominos (fd, &numRoots);
         fclose (fd);
         fd = NULL;
         if (roots == NULL) {
@@ -90,35 +96,57 @@ int main (int argc, char * argv[]) {
 
     // set up root nomino
     if (roots == NULL) {
-        roots = malloc (sizeof (nomino));
-        roots->size = 1;
-        roots->rot = 0;
-        roots->blocks = malloc (sizeof (block *));
-        roots->blocks[0] = malloc (sizeof (block));
-        roots->blocks[0]->x = 0;
-        roots->blocks[0]->y = 0;
-        roots->blocks[0]->bmap = 0x00;
-        roots->next = NULL;
+        roots = duplicate (NULL);
+        numRoots = 1;
     }
 
-    // begin
+    // begin generation
     while (roots->size < size) {
-        numShapes = 0;
-        while (roots != NULL) {
-            collect = genNominos (roots, collect);
-            rootsOld = roots;
-            roots = roots->next;
-            free (rootsOld);
+        // init collection pointers
+        children = malloc (sizeof (nomino *) * numRoots); 
+
+        // populate children collections
+        lastRoot = roots;
+        for (ii = 0; ii < numRoots; ii++) {
+            children[ii] = genNominos (lastRoot);
+            removeSubRoots (&(children[ii]), roots, lastRoot);
+            lastRoot = lastRoot->next;
         }
-        roots = collect;
-        collect = NULL;
-        printSts (roots->size);
-        printf ("\n");
+
+        // concatenate the children
+        numChildren = 0;
+        currChild = NULL;
+        for (ii = 0; ii < numRoots; ii++) {
+            // skip NULL sets
+            if (children[ii] == NULL)
+                continue;
+            
+            // Link last child found if applicable
+            if (currChild != NULL)
+                currChild->next = children[ii];
+
+            // Get the list head
+            currChild = children[ii];
+            numChildren++;
+
+            // rest of children
+            while (currChild->next != NULL) {
+                currChild = currChild->next;
+                numChildren++;
+            }
+        }
+
+        // cleanup, setup roots for next iteration
+        freeNominoList (roots);
+        roots = *children;
+        numRoots = numChildren;
+        free (children);
+        children = NULL;
     }
 
     clkEnd = clock();
     diffTime = (float) (clkEnd - clkStart) / CLOCKS_PER_SEC;
-    
+
     // open file for printing
     if (!quiet) {
         if (strcmp (outFile, "") != 0) {
@@ -152,6 +180,14 @@ int main (int argc, char * argv[]) {
             fclose (fd);
     }
 
+    // count
+    numShapes = 0;
+    while (roots != NULL) {
+        numShapes++;
+        roots = roots->next;
+    }
+
+    // print stats
     printf ("Generated %d unique %sominos in:\n"
             "    %.2f seconds (%.0f / sec)\n",
                 numShapes,
@@ -177,31 +213,31 @@ int main (int argc, char * argv[]) {
 /*
  * nomino * genNominos (nomino *)
  *
- * Takes a root shape and a collection of shapes 1 larger than root, generates
- * all unique shapes as children of root that do not exist in collection. new
- * shapes are prepended to the list
+ * Takes a root shape and generates all unique shapes as children of root
  *
- * Returns: updated collection using children of root
+ * Returns: collection of children shapes from root
  *
  */
-nomino * genNominos (nomino * root, nomino * collection) {
+nomino * genNominos (nomino * root) {
     int size = -1;
     int ii = 0;
     int jj = 0;
     int kk = 0;
     int dup = 0;
     int status = OK;
-    nomino * head = collection; // end position in list
+    nomino * collect = NULL;
+    nomino * collectEnd = NULL;
     nomino * comp = NULL; // pointer to compare for duplicates
     nomino * buff = NULL; // nomino being worked on / checked
     
+    // dont allow null roots
     if (root == NULL)
         return NULL;
 
     size = root->size;
-
     buff = duplicateGrow (root);
-    // for each block
+
+    // for each root block
     for (ii = 0; ii < size; ii++) {
         // for each direction
         for (jj = 0; jj < 4; jj++) {
@@ -244,29 +280,28 @@ nomino * genNominos (nomino * root, nomino * collection) {
                 continue;
 
             // if list is empty, obviously not a duplicate, add now
-            if (collection == NULL) {
+            if (collect == NULL) {
                 normalize (buff);
-                collection = duplicate (buff);
+                collect = duplicate (buff);
 
                 // update bitmap
-                collection->blocks[ii]->bmap |= (0x01 << (jj % 4));
-                collection->blocks[size]->bmap = 0x01 << ((jj + 2) % 4);
+                collect->blocks[ii]->bmap |= (0x01 << (jj % 4));
+                collect->blocks[size]->bmap = 0x01 << ((jj + 2) % 4);
 
-                head = collection;
-                numShapes++;
+                collectEnd = collect;
                 continue;
             }
 
             // loop through rotations
             dup = 0;
             for (kk = 0; kk < 4; kk++) {
-                rotate (buff);
+                rotate (buff, 1);
                 
                 // normalize coords
                 normalize (buff);
                
                 // check if unique
-                comp = head;
+                comp = collect;
                 while (comp != NULL) {
                     if (compare (buff, comp) == OK) {
                         dup = 1;
@@ -279,31 +314,24 @@ nomino * genNominos (nomino * root, nomino * collection) {
                     break;
             }
 
-            while (buff->rot !=0)
-                rotate (buff);
+            rotate (buff, 4 - buff->rot);
 
             normalize(buff);
 
             // Add if not a duplicate 
             if (!dup) {
-                buff->next = head;
-                head = duplicate (buff);
+                collectEnd->next = duplicate (buff);
+                collectEnd = collectEnd->next;
 
                 // update block bitmaps
-                head->blocks[ii]->bmap |= (0x01 << (jj % 4));
-                head->blocks[size]->bmap = 0x01 << ((jj + 2) % 4);
-
-                numShapes++;
-                if ((numShapes % 100) == 0) {
-                    printSts (size + 1);
-                    fflush (stdout);
-                }
+                collectEnd->blocks[ii]->bmap |= (0x01 << (jj % 4));
+                collectEnd->blocks[size]->bmap = 0x01 << ((jj + 2) % 4);
             }
         }
     }
     freeNomino (&buff);
 
-    return head;
+    return collect;
 }
 
 

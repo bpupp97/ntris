@@ -1,5 +1,4 @@
-CCFLAGS=-Wall -Werror -ggdb
-SRCDIR=./src/
+CFLAGS=-Wall -Werror -ggdb
 SRC=./src/ntris.c \
     ./src/ntris_io.c \
     ./src/ntris_memory.c \
@@ -10,7 +9,7 @@ OBJ=$(SRC:.c=.o)
 OUTFILE=./ntris
 
 ntris: $(OBJ)
-	gcc $(OBJ) $(CCFLAGS) -o $(OUTFILE)
+	gcc $(OBJ) $(CFLAGS) -o $(OUTFILE)
 
 .PHONY: clean
 

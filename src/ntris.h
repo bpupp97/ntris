@@ -41,26 +41,34 @@ typedef struct _nomino nomino;
 #define FAILOPEN        "Failed to open file: %s\n"
 #define FAILLOAD        "Failed to load nominos: Invalid Data\n"
 
+//#define DEBUG
+#ifdef DEBUG
+void printNomStruct (nomino * nom);
+#endif
+
 extern wint_t nomchars[];
 
 // I/O functions
 void printSts (int size);
 void saveNominos (nomino * nominout, FILE * fd);
-nomino * loadNominos (FILE * fd);
+nomino * loadNominos (FILE * fd, int * numNoms);
 void printNominos (nomino * nominout, FILE * fd);
 
 // memory management functions
 void freeNomino (nomino ** nullmino);
+void freeNominoList (nomino * nullmino);
 nomino * duplicateGrow (nomino * parentNomino);
 nomino * duplicate (nomino * parentNomino);
 
 // geometric functions
 int addBlock (nomino * frankenomino, int xPos, int yPos);
 void normalize (nomino * nominormal);
-void rotate (nomino * nomspino);
+void normalizeOffset (nomino * nominormal, int baseX, int baseY);
+void rotate (nomino * nomspino, int amount);
 int compare (nomino * nominone, nomino * nomintwo);
+void removeSubRoots (nomino ** collection, nomino * rStart, nomino * rEnd);
 
 // 'main' function
-nomino * genNominos (nomino * root, nomino * collection);
+nomino * genNominos (nomino * root);
 
 #endif // INC_NTRIS_H

@@ -1,3 +1,4 @@
 ntris
-ntris.out
 *.o
+*.dat
+*.txt
