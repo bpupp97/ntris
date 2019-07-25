@@ -141,6 +141,63 @@ int compare (nomino * nominone, nomino * nomintwo) {
 }
 
 /*
+ * int compareSize (nomino *, nomino *)
+ *
+ * Compares the bounding size of the two nomino structures, the first argument
+ * is expected to be one size larger on one side than the 2nd
+ *
+ * Returns: 0 on match, -1 otherwise
+ *
+ */
+int compareSize (nomino * one, nomino * two) {
+    INT8 maxOneX = -1;
+    INT8 maxOneY = -1;
+    INT8 maxTwoX = -1;
+    INT8 maxTwoY = -1;
+    int ii;
+
+    // parse shape one
+    for (ii = 0; ii < one->size; ii++) {
+        if (one->blocks[ii]->x > maxOneX)
+            maxOneX = one->blocks[ii]->x;
+        if (one->blocks[ii]->y > maxOneY)
+            maxOneY = one->blocks[ii]->y;
+    }
+
+    // parse shape two
+    for (ii = 0; ii < two->size; ii++) {
+        if (two->blocks[ii]->x > maxTwoX)
+            maxTwoX = two->blocks[ii]->x;
+        if (two->blocks[ii]->y > maxTwoY)
+            maxTwoY = two->blocks[ii]->y;
+    }
+
+    // Check for needing rotation matches first
+    // X=Y, Y=X
+    if (maxOneX == maxTwoY && maxOneY == maxTwoX)
+        return 0;
+    // X=Y+1, Y=X
+    if (maxOneX == maxTwoY + 1 && maxOneY == maxTwoX)
+        return 0;
+    // X=Y, Y=X+1;
+    if (maxOneX == maxTwoY && maxOneY == maxTwoX + 1)
+        return 0;
+
+    // Check for unrotated matches
+    // X=X, Y=Y
+    if (maxOneX == maxTwoX && maxOneY == maxTwoY)
+        return 0;
+    // X=X+1, Y=Y
+    if (maxOneX == maxTwoX + 1 && maxOneY == maxTwoY)
+        return 0;
+    // X=X, Y=Y+1
+    if (maxOneX == maxTwoX && maxOneY == maxTwoY + 1)
+        return 0;
+
+    return -1;
+}
+
+/*
  * void removeSubRoots (nomino ** collection, nomino * rootsStart, nomino * rootsEnd)
  *
  * Modifies the collection to remove any nominos containing the roots between
@@ -148,7 +205,6 @@ int compare (nomino * nominone, nomino * nomintwo) {
  *
  * RETURNS: none
  */
- 
 void removeSubRoots (nomino ** collection, nomino * rStart, nomino * rEnd) {
     nomino * rCurr = NULL;
     nomino * collectCurr = *collection;
@@ -161,56 +217,62 @@ void removeSubRoots (nomino ** collection, nomino * rStart, nomino * rEnd) {
         rCurr = rStart;
         found = -1;
         while (rCurr != rEnd) { // for each root in range
-            for (rot = 0; rot < 4; rot++) {
-                // rotate
-                rotate (collectCurr, 1);
+            if (compareSize (collectCurr, rCurr) != -1) {
+                for (rot = 0; rot < 4; rot++) {
+                    // rotate
+                    rotate (collectCurr, 1);
 
-                for (offset = 0; offset < 5; offset++) {
-                    // normalize with offsets
-                    switch (offset) {
-                        case 0:
-                            normalizeOffset (collectCurr, 0, 1);
-                            break;
+                    for (offset = 0; offset < 5; offset++) {
+                        // normalize with offsets
+                        switch (offset) {
+                            case 0:
+                                normalizeOffset (collectCurr, 0, 1);
+                                break;
 
-                        case 1:
-                            normalizeOffset (collectCurr, 1, 0);
-                            break;
+                            case 1:
+                                normalizeOffset (collectCurr, 1, 0);
+                                break;
 
-                        case 2:
-                            normalizeOffset (collectCurr, 0, -1);
-                            break;
+                            case 2:
+                                normalizeOffset (collectCurr, 0, -1);
+                                break;
 
-                        case 3:
-                            normalizeOffset (collectCurr, -1, 0);
-                            break;
+                            case 3:
+                                normalizeOffset (collectCurr, -1, 0);
+                                break;
 
-                        case 4:
-                            // other orders are arbitrary, but 0,0 MUST be last to retain orig shape
-                            normalizeOffset (collectCurr, 0, 0);
-                            break;
+                            case 4:
+                                // other orders are arbitrary, but 0,0 MUST be last to retain orig shape
+                                normalizeOffset (collectCurr, 0, 0);
+                                break;
 
-                        default:
-                            break;
-                    }
-
-                    if ((found = compare (collectCurr, rCurr)) == OK) { 
-                        // sub-root found, remove
-                        if (collectPrev != NULL) {
-                            // middle of list, can just do unlink
-                            collectPrev->next = collectCurr->next;
-                            freeNomino (&collectCurr);
-                            collectCurr = collectPrev->next;
-                        } else {
-                            // start of list, need to also update pointer given
-                            *collection = (*collection)->next;
-                            freeNomino (&collectCurr);
-                            collectCurr = *collection;
+                            default:
+                                break;
                         }
-                        break;
+                        
+                        // check if root exists in current transformation
+                        // if x or y < 0, root cannot exist because it is normalized
+                        if (collectCurr->blocks[collectCurr->size - 1]->x >= 0 &&
+                            collectCurr->blocks[collectCurr->size - 1]->y >= 0 &&
+                            (found = compare (collectCurr, rCurr)) == OK) { 
+                            // sub-root found, remove
+                            if (collectPrev != NULL) {
+                                // middle of list, can just do unlink
+                                collectPrev->next = collectCurr->next;
+                                freeNomino (&collectCurr);
+                                collectCurr = collectPrev->next;
+                            } else {
+                                // start of list, need to also update pointer given
+                                *collection = (*collection)->next;
+                                freeNomino (&collectCurr);
+                                collectCurr = *collection;
+                            }
+                            break;
+                        }
                     }
+                    if (found == OK)
+                        break;
                 }
-                if (found == OK)
-                    break;
             }
             if (found == OK)
                 break;
