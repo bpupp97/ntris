@@ -120,7 +120,7 @@ int compare (nomino * nominone, nomino * nomintwo) {
     
     allowDif = nominone->size - nomintwo->size;
 
-    for (ii = 0; ii < nominone->size; ii++) {
+    for (ii = nominone->size - 1; ii >= 0; ii--) {
         found = 0;
         for (jj = 0; jj < nomintwo->size; jj++) {
             if (nominone->blocks[ii]->x == nomintwo->blocks[jj]->x &&
@@ -130,7 +130,9 @@ int compare (nomino * nominone, nomino * nomintwo) {
             }
         }
         if (!found) {
-            if (--allowDif < 0 )
+            // this only works for merge algorithm, since the last block must
+            // be contained in the root
+            if (ii == nominone->size - 1 || --allowDif < 0 )
                 return ERROR;
         }
     }
